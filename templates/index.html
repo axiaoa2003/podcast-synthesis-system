@@ -13,6 +13,39 @@
     <div class="container mt-5">
         <h1 class="text-center mb-5">双人对话播客合成系统</h1>
         
+        <!-- API密钥配置区域 -->
+        <div class="row mb-5">
+            <div class="col-md-8 offset-md-2">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        API密钥配置
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">请输入您的API密钥，这些密钥将用于调用相应的AI服务。</p>
+                        
+                        <div class="mb-3">
+                            <label for="deepseekApiKey" class="form-label">DeepSeek API Key</label>
+                            <input type="password" class="form-control" id="deepseekApiKey" placeholder="请输入DeepSeek API Key" maxlength="64">
+                            <div class="form-text">用于调用DeepSeek的AI生成服务</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="minimaxApiKey" class="form-label">MiniMax API Key</label>
+                            <input type="password" class="form-control" id="minimaxApiKey" placeholder="请输入MiniMax API Key" maxlength="512">
+                            <div class="form-text">用于调用MiniMax的语音合成服务</div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button id="saveApiKeysBtn" class="btn btn-primary">保存API密钥</button>
+                            <button id="clearApiKeysBtn" class="btn btn-secondary">清除密钥</button>
+                        </div>
+                        
+                        <div id="apiKeyStatus" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- 主内容区 -->
         <div class="row">
             <div class="col-lg-12">
@@ -71,16 +104,35 @@
                     <!-- 文稿编辑 -->
                     <div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
                         <div class="mt-4">
-                            <div class="mb-3">
-                                <label for="scriptEditor" class="form-label">播客文稿编辑器</label>
-                                <textarea class="form-control" id="scriptEditor" rows="15" placeholder="请编辑播客文稿，使用 [A] 和 [B] 标记不同角色"></textarea>
+                            <h5>文稿编辑与情绪配置</h5>
+                            <p class="text-muted">支持逐句情绪、语速、语调调节，格式：[A](happy,1.2,0): 文本内容</p>
+                            
+                            <div class="row">
+                                <!-- 左侧：文本编辑器 -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="scriptEditor" class="form-label">播客文稿编辑器</label>
+                                        <textarea class="form-control" id="scriptEditor" rows="20" placeholder="请编辑播客文稿，使用 [A] 和 [B] 标记不同角色"></textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button id="optimizeScriptBtn" class="btn btn-primary">优化文稿</button>
+                                        <button id="validateScriptBtn" class="btn btn-secondary">验证格式</button>
+                                        <button id="copyScriptBtn" class="btn btn-success">复制文稿</button>
+                                    </div>
+                                    <div id="validationResult" class="mt-3"></div>
+                                </div>
+                                
+                                <!-- 右侧：情绪配置面板 -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">情绪参数配置</label>
+                                        <div id="emotionConfigPanel" style="max-height: 500px; overflow-y: auto;"></div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button id="refreshEmotionPanelBtn" class="btn btn-info">刷新情绪配置</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="d-flex gap-2">
-                                <button id="optimizeScriptBtn" class="btn btn-primary">优化文稿</button>
-                                <button id="validateScriptBtn" class="btn btn-secondary">验证格式</button>
-                                <button id="copyScriptBtn" class="btn btn-success">复制文稿</button>
-                            </div>
-                            <div id="validationResult" class="mt-3"></div>
                         </div>
                     </div>
                     
@@ -96,11 +148,23 @@
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <label for="voiceA" class="form-label">选择声音</label>
-                                                <select class="form-select" id="voiceA">
+                                                <!-- 隐藏原生 select，用于存储实际值 -->
+                                                <select class="form-select d-none" id="voiceA">
                                                     {% for voice in voices %}
                                                         <option value="{{ voice.id }}">{{ voice.name }}</option>
                                                     {% endfor %}
                                                 </select>
+                                                <!-- Bootstrap Dropdown 组件 -->
+                                                <div class="dropdown">
+                                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="voiceADropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        {% if voices and voices|length > 0 %}{{ voices[0].name }}{% else %}APIKey不可用，请输入APIKey{% endif %}
+                                                    </button>
+                                                    <ul class="dropdown-menu select-scrollable w-100" aria-labelledby="voiceADropdown" style="max-height: 300px; overflow-y: auto;">
+                                                        {% for voice in voices %}
+                                                            <li><a class="dropdown-item" href="#" data-value="{{ voice.id }}">{{ voice.name }}</a></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
                                             </div>
                                             <!-- 可以添加语速、音量、语调等设置 -->
                                         </div>
@@ -114,11 +178,23 @@
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <label for="voiceB" class="form-label">选择声音</label>
-                                                <select class="form-select" id="voiceB">
+                                                <!-- 隐藏原生 select，用于存储实际值 -->
+                                                <select class="form-select d-none" id="voiceB">
                                                     {% for voice in voices %}
                                                         <option value="{{ voice.id }}" {% if loop.index == 2 %}selected{% endif %}>{{ voice.name }}</option>
                                                     {% endfor %}
                                                 </select>
+                                                <!-- Bootstrap Dropdown 组件 -->
+                                                <div class="dropdown">
+                                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="voiceBDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        {% if voices and voices|length > 1 %}{{ voices[1].name }}{% elif voices and voices|length > 0 %}{{ voices[0].name }}{% else %}APIKey不可用，请输入APIKey{% endif %}
+                                                    </button>
+                                                    <ul class="dropdown-menu select-scrollable w-100" aria-labelledby="voiceBDropdown" style="max-height: 300px; overflow-y: auto;">
+                                                        {% for voice in voices %}
+                                                            <li><a class="dropdown-item" href="#" data-value="{{ voice.id }}">{{ voice.name }}</a></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
                                             </div>
                                             <!-- 可以添加语速、音量、语调等设置 -->
                                         </div>

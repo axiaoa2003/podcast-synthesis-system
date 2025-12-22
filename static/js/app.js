@@ -4,6 +4,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化事件监听器
     initializeEventListeners();
+    // 加载已保存的API密钥
+    loadApiKeys();
 });
 
 // 初始化事件监听器
@@ -18,6 +20,7 @@ function initializeEventListeners() {
     document.getElementById('optimizeScriptBtn').addEventListener('click', optimizeScript);
     document.getElementById('validateScriptBtn').addEventListener('click', validateScript);
     document.getElementById('copyScriptBtn').addEventListener('click', copyScript);
+    document.getElementById('refreshEmotionPanelBtn').addEventListener('click', renderEmotionConfigPanel);
     
     // 4. 播客生成
     document.getElementById('startGenerateBtn').addEventListener('click', startGeneratePodcast);
@@ -27,6 +30,20 @@ function initializeEventListeners() {
     tabElements.forEach(tab => {
         tab.addEventListener('shown.bs.tab', handleTabChange);
     });
+    
+    // 6. 初始化声音选择Dropdown
+    initializeVoiceDropdowns();
+    
+    // 7. API密钥管理
+    document.getElementById('saveApiKeysBtn').addEventListener('click', saveApiKeys);
+    document.getElementById('clearApiKeysBtn').addEventListener('click', clearApiKeys);
+    
+    // 8. 文稿编辑器事件
+    const scriptEditor = document.getElementById('scriptEditor');
+    if (scriptEditor) {
+        scriptEditor.addEventListener('input', renderEmotionConfigPanel);
+        scriptEditor.addEventListener('change', renderEmotionConfigPanel);
+    }
 }
 
 // 处理标签页切换
@@ -103,12 +120,19 @@ async function generateInspiration() {
     clearMessage('inspirationResult');
     
     try {
+        // 从localStorage获取API密钥
+        const deepseekApiKey = localStorage.getItem('deepseekApiKey') || '';
+        
         const response = await fetch('/api/generate-inspiration', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-DeepSeek-API-Key': deepseekApiKey
             },
-            body: JSON.stringify({ topic: topic })
+            body: JSON.stringify({ 
+                topic: topic,
+                deepseek_api_key: deepseekApiKey
+            })
         });
         
         const data = await response.json();
@@ -155,14 +179,19 @@ async function generateScript() {
     clearMessage('scriptResult');
     
     try {
+        // 从localStorage获取API密钥
+        const deepseekApiKey = localStorage.getItem('deepseekApiKey') || '';
+        
         const response = await fetch('/api/generate-script', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-DeepSeek-API-Key': deepseekApiKey
             },
             body: JSON.stringify({ 
                 inspiration: inspiration, 
-                length: length 
+                length: length,
+                deepseek_api_key: deepseekApiKey
             })
         });
         
@@ -176,6 +205,8 @@ async function generateScript() {
             resultDiv.className = 'mt-3 p-3 bg-light border rounded';
             resultDiv.textContent = data.script;
             document.getElementById('scriptResult').appendChild(resultDiv);
+            // 将生成的文稿自动填充到编辑器中
+            document.getElementById('scriptEditor').value = data.script;
         } else {
             showMessage('scriptResult', data.message, 'danger');
         }
@@ -201,12 +232,19 @@ async function optimizeScript() {
     clearMessage('validationResult');
     
     try {
+        // 从localStorage获取API密钥
+        const deepseekApiKey = localStorage.getItem('deepseekApiKey') || '';
+        
         const response = await fetch('/api/optimize-script', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-DeepSeek-API-Key': deepseekApiKey
             },
-            body: JSON.stringify({ script: script })
+            body: JSON.stringify({ 
+                script: script,
+                deepseek_api_key: deepseekApiKey
+            })
         });
         
         const data = await response.json();
@@ -306,11 +344,14 @@ async function startGeneratePodcast() {
     generationProgress.setAttribute('aria-valuenow', '0');
     
     try {
+        // 从localStorage获取API密钥
+        const minimaxApiKey = localStorage.getItem('minimaxApiKey') || '';
+        
         // 更新状态
         showMessage('generationStatus', '正在生成播客...', 'info');
         
-        // 打印发送到后端的声音ID
-        console.log('发送到后端的声音ID:', {
+        // 打印发送到后端的配置
+        console.log('发送到后端的配置:', {
             voice_a: voiceA.value,
             voice_b: voiceB.value
         });
@@ -319,12 +360,14 @@ async function startGeneratePodcast() {
         const response = await fetch('/api/synthesize-audio', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-MiniMax-API-Key': minimaxApiKey
             },
             body: JSON.stringify({
                 script: script,
                 voice_a: voiceA.value,
-                voice_b: voiceB.value
+                voice_b: voiceB.value,
+                minimax_api_key: minimaxApiKey
             })
         });
         
@@ -421,4 +464,392 @@ function countDialogues(text) {
     });
     
     return count;
+}
+
+// 初始化声音选择Dropdown
+function initializeVoiceDropdowns() {
+    // 处理声音A的Dropdown
+    const voiceADropdown = document.getElementById('voiceADropdown');
+    const voiceA = document.getElementById('voiceA');
+    const voiceAItems = document.querySelectorAll('#voiceADropdown + .dropdown-menu .dropdown-item');
+    
+    // 处理声音B的Dropdown
+    const voiceBDropdown = document.getElementById('voiceBDropdown');
+    const voiceB = document.getElementById('voiceB');
+    const voiceBItems = document.querySelectorAll('#voiceBDropdown + .dropdown-menu .dropdown-item');
+    
+    // 更新Dropdown按钮显示当前选中的值
+    function updateDropdownButton(dropdownButton, selectElement) {
+        const selectedValue = selectElement.value;
+        const selectedOption = selectElement.querySelector(`option[value="${selectedValue}"]`);
+        if (selectedOption && dropdownButton) {
+            dropdownButton.textContent = selectedOption.textContent;
+        }
+    }
+    
+    // 初始化Dropdown按钮显示
+    updateDropdownButton(voiceADropdown, voiceA);
+    updateDropdownButton(voiceBDropdown, voiceB);
+    
+    // 为声音A的Dropdown菜单项添加点击事件
+    voiceAItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const value = this.getAttribute('data-value');
+            const text = this.textContent;
+            
+            // 更新隐藏的select元素
+            voiceA.value = value;
+            
+            // 更新Dropdown按钮文本
+            voiceADropdown.textContent = text;
+        });
+    });
+    
+    // 为声音B的Dropdown菜单项添加点击事件
+    voiceBItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const value = this.getAttribute('data-value');
+            const text = this.textContent;
+            
+            // 更新隐藏的select元素
+            voiceB.value = value;
+            
+            // 更新Dropdown按钮文本
+            voiceBDropdown.textContent = text;
+        });
+    });
+}
+
+// API密钥管理
+
+// 加载API密钥
+function loadApiKeys() {
+    const deepseekApiKey = localStorage.getItem('deepseekApiKey');
+    const minimaxApiKey = localStorage.getItem('minimaxApiKey');
+    
+    if (deepseekApiKey) {
+        document.getElementById('deepseekApiKey').value = deepseekApiKey;
+    }
+    
+    if (minimaxApiKey) {
+        document.getElementById('minimaxApiKey').value = minimaxApiKey;
+    }
+}
+
+// 保存API密钥
+function saveApiKeys() {
+    const deepseekApiKey = document.getElementById('deepseekApiKey').value.trim();
+    const minimaxApiKey = document.getElementById('minimaxApiKey').value.trim();
+    const statusDiv = document.getElementById('apiKeyStatus');
+    
+    // 保存到localStorage
+    localStorage.setItem('deepseekApiKey', deepseekApiKey);
+    localStorage.setItem('minimaxApiKey', minimaxApiKey);
+    
+    // 显示成功消息
+    statusDiv.innerHTML = '<div class="alert alert-success" role="alert">API密钥保存成功！正在更新音色列表...</div>';
+    
+    // 刷新音色列表
+    refreshVoiceList(minimaxApiKey);
+    
+    // 3秒后清除消息
+    setTimeout(() => {
+        statusDiv.innerHTML = '';
+    }, 3000);
+}
+
+// 刷新音色列表
+async function refreshVoiceList(minimaxApiKey) {
+    try {
+        // 调用API获取最新音色列表
+        const response = await fetch('/api/get-voice-list', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-MiniMax-API-Key': minimaxApiKey
+            },
+            body: JSON.stringify({
+                minimax_api_key: minimaxApiKey
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // 更新音色列表
+            updateVoiceDropdowns(data.voices);
+        }
+    } catch (error) {
+        console.error('刷新音色列表失败:', error);
+    }
+}
+
+// 更新音色下拉菜单
+function updateVoiceDropdowns(voices) {
+    // 更新角色A的音色下拉菜单
+    updateSingleVoiceDropdown('voiceA', 'voiceADropdown', voices);
+    // 更新角色B的音色下拉菜单
+    updateSingleVoiceDropdown('voiceB', 'voiceBDropdown', voices);
+}
+
+// 更新单个音色下拉菜单
+function updateSingleVoiceDropdown(selectId, dropdownId, voices) {
+    // 更新隐藏的原生select
+    const selectElement = document.getElementById(selectId);
+    // 清空现有选项
+    selectElement.innerHTML = '';
+    // 添加新选项
+    voices.forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice.id;
+        option.textContent = voice.name;
+        selectElement.appendChild(option);
+    });
+    
+    // 更新Bootstrap Dropdown
+    const dropdownMenu = document.querySelector(`#${dropdownId} + .dropdown-menu`);
+    // 清空现有菜单项
+    dropdownMenu.innerHTML = '';
+    // 添加新菜单项
+    voices.forEach(voice => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'dropdown-item';
+        a.href = '#';
+        a.setAttribute('data-value', voice.id);
+        a.textContent = voice.name;
+        // 添加点击事件
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            const value = this.getAttribute('data-value');
+            const text = this.textContent;
+            // 更新隐藏的select元素
+            selectElement.value = value;
+            // 更新Dropdown按钮文本
+            document.getElementById(dropdownId).textContent = text;
+        });
+        li.appendChild(a);
+        dropdownMenu.appendChild(li);
+    });
+    
+    // 更新Dropdown按钮显示当前选中的值
+    const selectedValue = selectElement.value;
+    const selectedOption = selectElement.querySelector(`option[value="${selectedValue}"]`);
+    if (selectedOption) {
+        document.getElementById(dropdownId).textContent = selectedOption.textContent;
+    }
+}
+
+// 清除API密钥
+function clearApiKeys() {
+    // 清除输入框
+    document.getElementById('deepseekApiKey').value = '';
+    document.getElementById('minimaxApiKey').value = '';
+    
+    // 清除localStorage
+    localStorage.removeItem('deepseekApiKey');
+    localStorage.removeItem('minimaxApiKey');
+    
+    // 显示成功消息
+    const statusDiv = document.getElementById('apiKeyStatus');
+    statusDiv.innerHTML = '<div class="alert alert-info" role="alert">API密钥已清除！</div>';
+    
+    // 3秒后清除消息
+    setTimeout(() => {
+        statusDiv.innerHTML = '';
+    }, 3000);
+}
+
+// 文本文稿转结构化数据
+function parseScriptToDialogues(script) {
+    const dialogues = [];
+    const lines = script.split('\n');
+    
+    lines.forEach(line => {
+        line = line.trim();
+        if (!line) {
+            // 保留空行
+            dialogues.push({ type: 'empty' });
+            return;
+        }
+        
+        // 匹配带情绪参数的格式
+        const match = line.match(/^\[([AB])\]\(([^,]*),([^,]+),([^)]+)\)\s*[:：]\s*(.*)$/);
+        if (match) {
+            dialogues.push({
+                type: 'dialogue',
+                role: match[1],
+                text: match[5].trim(),
+                emotion: match[2].trim(),
+                speed: parseFloat(match[3].trim()),
+                pitch: parseInt(match[4].trim())
+            });
+        } else {
+            // 匹配不带情绪参数的格式
+            const simpleMatch = line.match(/^\[([AB])\]\s*[:：]\s*(.*)$/);
+            if (simpleMatch) {
+                dialogues.push({
+                    type: 'dialogue',
+                    role: simpleMatch[1],
+                    text: simpleMatch[2].trim(),
+                    emotion: '',
+                    speed: 1.0,
+                    pitch: 0
+                });
+            } else {
+                // 保留其他类型的行（如注释、说明等）
+                dialogues.push({ type: 'other', content: line });
+            }
+        }
+    });
+    
+    return dialogues;
+}
+
+// 结构化数据转文本文稿
+function dialoguesToScript(dialogues) {
+    let script = '';
+    dialogues.forEach(item => {
+        if (item.type === 'dialogue') {
+            const dialogue = item;
+            if (dialogue.emotion || dialogue.speed !== 1.0 || dialogue.pitch !== 0) {
+                // 带情绪参数的格式
+                script += `[${dialogue.role}](${dialogue.emotion || ''},${dialogue.speed},${dialogue.pitch}): ${dialogue.text}\n`;
+            } else {
+                // 不带情绪参数的格式
+                script += `[${dialogue.role}]: ${dialogue.text}\n`;
+            }
+        } else if (item.type === 'empty') {
+            // 保留空行
+            script += '\n';
+        } else if (item.type === 'other') {
+            // 保留其他类型的行
+            script += `${item.content}\n`;
+        }
+    });
+    return script;
+}
+
+// 渲染情绪配置面板
+function renderEmotionConfigPanel() {
+    const script = document.getElementById('scriptEditor').value;
+    const panel = document.getElementById('emotionConfigPanel');
+    
+    // 解析文稿，获取对话列表
+    const items = parseScriptToDialogues(script);
+    
+    // 过滤出只包含对话类型的项
+    const dialogues = items.filter(item => item.type === 'dialogue');
+    
+    // 渲染配置面板
+    panel.innerHTML = '';
+    dialogues.forEach((dialogue, index) => {
+        const configDiv = document.createElement('div');
+        configDiv.className = 'mb-3 p-3 border rounded';
+        configDiv.innerHTML = `
+            <h6>第 ${index + 1} 句 [${dialogue.role}]</h6>
+            <p class="text-muted">${dialogue.text}</p>
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="emotion-${index}" class="form-label">情绪</label>
+                    <select class="form-select" id="emotion-${index}" data-index="${index}">
+                        <option value="" ${dialogue.emotion === '' ? 'selected' : ''}>自动</option>
+                        <option value="happy" ${dialogue.emotion === 'happy' ? 'selected' : ''}>高兴</option>
+                        <option value="sad" ${dialogue.emotion === 'sad' ? 'selected' : ''}>悲伤</option>
+                        <option value="angry" ${dialogue.emotion === 'angry' ? 'selected' : ''}>愤怒</option>
+                        <option value="fearful" ${dialogue.emotion === 'fearful' ? 'selected' : ''}>害怕</option>
+                        <option value="disgusted" ${dialogue.emotion === 'disgusted' ? 'selected' : ''}>厌恶</option>
+                        <option value="surprised" ${dialogue.emotion === 'surprised' ? 'selected' : ''}>惊讶</option>
+                        <option value="calm" ${dialogue.emotion === 'calm' ? 'selected' : ''}>中性</option>
+                        <option value="fluent" ${dialogue.emotion === 'fluent' ? 'selected' : ''}>生动</option>
+                        <option value="whisper" ${dialogue.emotion === 'whisper' ? 'selected' : ''}>低语</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="speed-${index}" class="form-label">语速 (0.5-2.0)</label>
+                    <input type="range" class="form-range" id="speed-${index}" min="0.5" max="2.0" step="0.1" 
+                           value="${dialogue.speed || 1.0}" data-index="${index}">
+                    <div class="text-center">${dialogue.speed || 1.0}</div>
+                </div>
+                <div class="col-md-4">
+                    <label for="pitch-${index}" class="form-label">语调 (-12-12)</label>
+                    <input type="range" class="form-range" id="pitch-${index}" min="-12" max="12" step="1" 
+                           value="${dialogue.pitch || 0}" data-index="${index}">
+                    <div class="text-center">${dialogue.pitch || 0}</div>
+                </div>
+            </div>
+        `;
+        panel.appendChild(configDiv);
+    });
+    
+    // 添加事件监听器
+    addEmotionConfigListeners();
+}
+
+// 添加情绪配置面板事件监听器
+function addEmotionConfigListeners() {
+    // 情绪选择事件
+    document.querySelectorAll('[id^="emotion-"]').forEach(select => {
+        select.addEventListener('change', updateScriptFromConfig);
+    });
+    
+    // 语速滑块事件
+    document.querySelectorAll('[id^="speed-"]').forEach(range => {
+        range.addEventListener('input', function() {
+            this.nextElementSibling.textContent = this.value;
+            updateScriptFromConfig();
+        });
+    });
+    
+    // 语调滑块事件
+    document.querySelectorAll('[id^="pitch-"]').forEach(range => {
+        range.addEventListener('input', function() {
+            this.nextElementSibling.textContent = this.value;
+            updateScriptFromConfig();
+        });
+    });
+}
+
+// 根据情绪配置面板更新文稿
+function updateScriptFromConfig() {
+    // 从配置面板获取所有对话行的情绪参数
+    const configs = [];
+    document.querySelectorAll('[id^="emotion-"]').forEach((select, index) => {
+        const emotion = select.value;
+        const speed = document.getElementById(`speed-${index}`).value;
+        const pitch = document.getElementById(`pitch-${index}`).value;
+        configs.push({ emotion, speed, pitch });
+    });
+    
+    // 解析当前文稿，获取所有行（包括对话、空行、其他类型）
+    const script = document.getElementById('scriptEditor').value;
+    const items = parseScriptToDialogues(script);
+    
+    // 遍历所有行，更新对话行的情绪参数，保留其他类型的行不变
+    let dialogueIndex = 0;
+    const updatedItems = items.map(item => {
+        if (item.type === 'dialogue') {
+            // 更新对话行的情绪参数
+            const config = configs[dialogueIndex] || { emotion: '', speed: '1.0', pitch: '0' };
+            const updatedDialogue = {
+                ...item,
+                emotion: config.emotion,
+                speed: parseFloat(config.speed),
+                pitch: parseInt(config.pitch)
+            };
+            dialogueIndex++;
+            return updatedDialogue;
+        } else {
+            // 保留其他类型的行不变
+            return item;
+        }
+    });
+    
+    // 转换回文本文稿
+    const updatedScript = dialoguesToScript(updatedItems);
+    
+    // 更新文本编辑器
+    document.getElementById('scriptEditor').value = updatedScript;
 }

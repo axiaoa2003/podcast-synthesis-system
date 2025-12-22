@@ -2,9 +2,11 @@ from openai import OpenAI
 from config import DEEPSEEK_CONFIG
 
 class DeepSeekClient:
-    def __init__(self):
+    def __init__(self, api_key=None):
+        # 如果没有传入api_key，使用配置文件中的默认值
+        self.api_key = api_key or DEEPSEEK_CONFIG["api_key"]
         self.client = OpenAI(
-            api_key=DEEPSEEK_CONFIG["api_key"],
+            api_key=self.api_key,
             base_url=DEEPSEEK_CONFIG["base_url"]
         )
         self.model = DEEPSEEK_CONFIG["model"]
@@ -50,7 +52,19 @@ class DeepSeekClient:
         返回:
         - 结构化的双人对话文稿，使用[A]和[B]标记不同角色
         """
-        prompt = f"基于以下灵感生成一段约{length}字的双人对话播客文稿：\n\n{inspiration}\n\n要求：\n1. 使用[A]和[B]标记不同角色的对话\n2. 对话自然流畅，符合播客风格\n3. 包含适当的开场白和结束语\n4. 结构清晰，有明确的主题推进"
+        prompt = rf"""基于以下灵感生成一段约{length}字的双人对话播客文稿：
+
+{inspiration}
+
+要求：
+1. 每个对话行必须严格以 [A]: 或 [B]: 开头（冒号可以是英文冒号:或中文冒号：）
+2. 角色标记和对话内容之间可以有空格
+3. 每个对话行只包含一个角色的对话
+4. 对话自然流畅，符合播客风格
+5. 包含适当的开场白和结束语
+6. 结构清晰，有明确的主题推进
+7. 不要在对话内容中使用括号或其他特殊标记
+8. 确保所有对话都能被正则表达式 ^\[([AB])\]\s*[:：]\s*(.*)$ 匹配"""
         
         try:
             response = self.client.chat.completions.create(
@@ -68,7 +82,7 @@ class DeepSeekClient:
     
     def optimize_script(self, script):
         """
-        优化播客文稿结构和对话流畅度
+        优化文稿结构和对话流畅度
         
         参数:
         - script: 原始文稿
@@ -76,7 +90,19 @@ class DeepSeekClient:
         返回:
         - 优化后的文稿
         """
-        prompt = f"请优化以下播客文稿，提升对话流畅度和结构合理性：\n\n{script}\n\n要求：\n1. 保持原有的角色标记([A]和[B])\n2. 优化对话的自然度和连贯性\n3. 调整节奏，使对话更适合播客收听\n4. 保留核心内容，不改变主题"
+        prompt = rf"""请优化以下播客文稿，提升对话流畅度和结构合理性：
+
+{script}
+
+要求：
+1. 保持原有的角色标记([A]和[B])，每个对话行必须严格以 [A]: 或 [B]: 开头（冒号可以是英文冒号:或中文冒号：）
+2. 角色标记和对话内容之间可以有空格
+3. 每个对话行只包含一个角色的对话
+4. 优化对话的自然度和连贯性
+5. 调整节奏，使对话更适合播客收听
+6. 保留核心内容，不改变主题
+7. 不要在对话内容中使用括号或其他特殊标记
+8. 确保所有对话都能被正则表达式 ^\[([AB])\]\s*[:：]\s*(.*)$ 匹配"""
         
         try:
             response = self.client.chat.completions.create(

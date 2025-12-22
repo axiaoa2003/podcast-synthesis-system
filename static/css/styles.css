@@ -99,6 +99,74 @@ h1 {
     outline: none;
 }
 
+/* Select 下拉列表样式 */
+select.form-select {
+    position: relative;
+    max-height: 40px; /* 确保 select 本身高度正常 */
+}
+
+/* 针对 WebKit 浏览器的原生下拉列表样式 */
+select.form-select {
+    /* 设置下拉列表的最大高度 */
+    max-height: 300px;
+    /* 启用滚动 */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* 改善外观 */
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 针对 Firefox 的下拉列表样式 */
+@-moz-document url-prefix() {
+    select.form-select {
+        /* Firefox 支持通过 appearance 属性修改 select 样式 */
+        -moz-appearance: none;
+        /* 设置最大高度 */
+        max-height: 300px;
+        /* 添加滚动条 */
+        overflow-y: auto;
+        /* 滚动条样式 */
+        scrollbar-width: thin;
+        scrollbar-color: #0d6efd #f8f9fa;
+    }
+}
+
+/* 针对 Internet Explorer 和 Edge 的样式 */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    select.form-select {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+}
+
+/* 通用滚动条样式（适用于所有浏览器的滚动容器） */
+.select-scrollable {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 美化滚动条 */
+.select-scrollable::-webkit-scrollbar,
+select.form-select::-webkit-scrollbar {
+    width: 8px;
+}
+
+.select-scrollable::-webkit-scrollbar-track,
+select.form-select::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.select-scrollable::-webkit-scrollbar-thumb,
+select.form-select::-webkit-scrollbar-thumb {
+    background-color: #0d6efd;
+    border-radius: 4px;
+    border: 2px solid #f8f9fa;
+}
+
 textarea.form-control {
     resize: vertical;
     min-height: 120px;

@@ -27,20 +27,22 @@ print(f"验证消息: {validation['message']}")
 print("\n2. 解析对话：")
 dialogue = parse_dialogue(user_input)
 print(f"解析到 {len(dialogue)} 句对话")
-for i, (role, text) in enumerate(dialogue):
+for i, (role, text, emotion, speed, pitch) in enumerate(dialogue):
     print(f"[{i+1}] 角色{role}: {text[:50]}...")
+    if emotion:
+        print(f"    情绪: {emotion}, 语速: {speed}, 语调: {pitch}")
 
-# 3. 生成音频片段
+# 3. 生成音频片段：
 print("\n3. 生成音频片段：")
-voice_map = {
-    'A': 'male-qn-qingse',
-    'B': 'male-qn-qingse'
+voice_config = {
+    'A': {'voice_id': 'male-qn-qingse'},
+    'B': {'voice_id': 'male-qn-qingse'}
 }
 
 # 调用生成音频片段函数
 audio_files = generate_audio_segments(
     dialogue=dialogue,
-    voice_map=voice_map,
+    voice_config=voice_config,
     minimax_client=minimax_client,
     output_dir=test_output_dir
 )

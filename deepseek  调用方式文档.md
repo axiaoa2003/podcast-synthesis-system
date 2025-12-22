@@ -1,4 +1,4 @@
-sk-1f275c7f79764dc4bdb5de6910b41961
+
 
 
 # Please install OpenAI SDK first: `pip3 install openai`

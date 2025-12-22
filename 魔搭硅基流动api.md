@@ -1,0 +1,3 @@
+硅基流动api：sk-rakwuvelhgwnalvsafpskzoelpaqumocfeahidqniidnsbum
+
+魔搭api：ms-297c2646-cc47-4091-ba7f-1ececedcef44
