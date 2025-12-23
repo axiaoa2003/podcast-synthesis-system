@@ -1,11 +1,57 @@
 // 双人对话播客合成系统 - 前端交互逻辑
 
+// 防抖工具函数
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// 友好的错误信息处理
+function getFriendlyErrorMessage(error, operation) {
+    const errorMsg = error.message || error.toString();
+
+    // 网络相关错误
+    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
+        return `${operation}失败：无法连接到服务器，请检查网络连接或确认后端服务已启动`;
+    }
+
+    // API 密钥相关错误
+    if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorMsg.includes('API_KEY_INVALID')) {
+        return `${operation}失败：API密钥无效，请检查"API密钥配置"中的密钥是否正确`;
+    }
+
+    if (errorMsg.includes('429') || errorMsg.includes('rate limit') || errorMsg.includes('QUOTA_EXCEEDED')) {
+        return `${operation}失败：API调用次数超限或配额不足，请稍后再试`;
+    }
+
+    if (errorMsg.includes('403') || errorMsg.includes('Forbidden')) {
+        return `${operation}失败：权限不足，请检查API密钥权限`;
+    }
+
+    // 服务器错误
+    if (errorMsg.includes('500') || errorMsg.includes('502') || errorMsg.includes('503')) {
+        return `${operation}失败：服务器错误，请稍后重试`;
+    }
+
+    if (errorMsg.includes('timeout') || errorMsg.includes('Timeout')) {
+        return `${operation}失败：请求超时，请检查网络连接或稍后重试`;
+    }
+
+    // 其他错误，显示原始信息
+    return `${operation}失败：${errorMsg}`;
+}
+
 // DOM 加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化事件监听器
     initializeEventListeners();
-    // 加载已保存的API密钥
-    loadApiKeys();
 });
 
 // 初始化事件监听器
@@ -24,24 +70,21 @@ function initializeEventListeners() {
     
     // 4. 播客生成
     document.getElementById('startGenerateBtn').addEventListener('click', startGeneratePodcast);
-    
+
     // 5. 标签页切换事件
     const tabElements = document.querySelectorAll('#podcastTabs button');
     tabElements.forEach(tab => {
         tab.addEventListener('shown.bs.tab', handleTabChange);
     });
-    
+
     // 6. 初始化声音选择Dropdown
     initializeVoiceDropdowns();
-    
-    // 7. API密钥管理
-    document.getElementById('saveApiKeysBtn').addEventListener('click', saveApiKeys);
-    document.getElementById('clearApiKeysBtn').addEventListener('click', clearApiKeys);
-    
-    // 8. 文稿编辑器事件
+
+    // 7. 文稿编辑器事件（使用防抖优化性能）
     const scriptEditor = document.getElementById('scriptEditor');
     if (scriptEditor) {
-        scriptEditor.addEventListener('input', renderEmotionConfigPanel);
+        const debouncedRender = debounce(renderEmotionConfigPanel, 300);
+        scriptEditor.addEventListener('input', debouncedRender);
         scriptEditor.addEventListener('change', renderEmotionConfigPanel);
     }
 }
@@ -120,19 +163,12 @@ async function generateInspiration() {
     clearMessage('inspirationResult');
     
     try {
-        // 从localStorage获取API密钥
-        const deepseekApiKey = localStorage.getItem('deepseekApiKey') || '';
-        
         const response = await fetch('/api/generate-inspiration', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-DeepSeek-API-Key': deepseekApiKey
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                topic: topic,
-                deepseek_api_key: deepseekApiKey
-            })
+            body: JSON.stringify({ topic: topic })
         });
         
         const data = await response.json();
@@ -149,7 +185,8 @@ async function generateInspiration() {
             showMessage('inspirationResult', data.message, 'danger');
         }
     } catch (error) {
-        showMessage('inspirationResult', `生成灵感失败: ${error.message}`, 'danger');
+        const friendlyMsg = getFriendlyErrorMessage(error, '生成灵感');
+        showMessage('inspirationResult', friendlyMsg, 'danger');
     } finally {
         hideLoading(generateBtn, originalText);
     }
@@ -179,19 +216,14 @@ async function generateScript() {
     clearMessage('scriptResult');
     
     try {
-        // 从localStorage获取API密钥
-        const deepseekApiKey = localStorage.getItem('deepseekApiKey') || '';
-        
         const response = await fetch('/api/generate-script', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-DeepSeek-API-Key': deepseekApiKey
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                inspiration: inspiration, 
-                length: length,
-                deepseek_api_key: deepseekApiKey
+            body: JSON.stringify({
+                inspiration: inspiration,
+                length: length
             })
         });
         
@@ -211,7 +243,8 @@ async function generateScript() {
             showMessage('scriptResult', data.message, 'danger');
         }
     } catch (error) {
-        showMessage('scriptResult', `生成文稿失败: ${error.message}`, 'danger');
+        const friendlyMsg = getFriendlyErrorMessage(error, '生成文稿');
+        showMessage('scriptResult', friendlyMsg, 'danger');
     } finally {
         hideLoading(generateBtn, originalText);
     }
@@ -232,19 +265,12 @@ async function optimizeScript() {
     clearMessage('validationResult');
     
     try {
-        // 从localStorage获取API密钥
-        const deepseekApiKey = localStorage.getItem('deepseekApiKey') || '';
-        
         const response = await fetch('/api/optimize-script', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-DeepSeek-API-Key': deepseekApiKey
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                script: script,
-                deepseek_api_key: deepseekApiKey
-            })
+            body: JSON.stringify({ script: script })
         });
         
         const data = await response.json();
@@ -256,7 +282,8 @@ async function optimizeScript() {
             showMessage('validationResult', data.message, 'danger');
         }
     } catch (error) {
-        showMessage('validationResult', `优化文稿失败: ${error.message}`, 'danger');
+        const friendlyMsg = getFriendlyErrorMessage(error, '优化文稿');
+        showMessage('validationResult', friendlyMsg, 'danger');
     } finally {
         hideLoading(optimizeBtn, originalText);
     }
@@ -293,23 +320,21 @@ async function validateScript() {
             showMessage('validationResult', data.message, 'warning');
         }
     } catch (error) {
-        showMessage('validationResult', `验证文稿失败: ${error.message}`, 'danger');
+        const friendlyMsg = getFriendlyErrorMessage(error, '验证文稿');
+        showMessage('validationResult', friendlyMsg, 'danger');
     } finally {
         hideLoading(validateBtn, originalText);
     }
 }
 
 // 复制文稿到剪贴板
-function copyScript() {
+async function copyScript() {
     const scriptEditor = document.getElementById('scriptEditor');
-    
-    scriptEditor.select();
-    scriptEditor.setSelectionRange(0, 99999); // 适用于移动设备
-    
+
     try {
-        document.execCommand('copy');
+        await navigator.clipboard.writeText(scriptEditor.value);
         showMessage('validationResult', '文稿已复制到剪贴板！', 'success');
-        
+
         // 3秒后清除消息
         setTimeout(() => {
             clearMessage('validationResult');
@@ -344,30 +369,19 @@ async function startGeneratePodcast() {
     generationProgress.setAttribute('aria-valuenow', '0');
     
     try {
-        // 从localStorage获取API密钥
-        const minimaxApiKey = localStorage.getItem('minimaxApiKey') || '';
-        
         // 更新状态
         showMessage('generationStatus', '正在生成播客...', 'info');
-        
-        // 打印发送到后端的配置
-        console.log('发送到后端的配置:', {
-            voice_a: voiceA.value,
-            voice_b: voiceB.value
-        });
-        
+
         // 调用 API 生成播客
         const response = await fetch('/api/synthesize-audio', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-MiniMax-API-Key': minimaxApiKey
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 script: script,
                 voice_a: voiceA.value,
-                voice_b: voiceB.value,
-                minimax_api_key: minimaxApiKey
+                voice_b: voiceB.value
             })
         });
         
@@ -391,7 +405,8 @@ async function startGeneratePodcast() {
             showMessage('generationStatus', data.message, 'danger');
         }
     } catch (error) {
-        showMessage('generationStatus', `生成播客失败: ${error.message}`, 'danger');
+        const friendlyMsg = getFriendlyErrorMessage(error, '生成播客');
+        showMessage('generationStatus', friendlyMsg, 'danger');
     } finally {
         hideLoading(startGenerateBtn, originalText);
     }
@@ -520,146 +535,6 @@ function initializeVoiceDropdowns() {
             voiceBDropdown.textContent = text;
         });
     });
-}
-
-// API密钥管理
-
-// 加载API密钥
-function loadApiKeys() {
-    const deepseekApiKey = localStorage.getItem('deepseekApiKey');
-    const minimaxApiKey = localStorage.getItem('minimaxApiKey');
-    
-    if (deepseekApiKey) {
-        document.getElementById('deepseekApiKey').value = deepseekApiKey;
-    }
-    
-    if (minimaxApiKey) {
-        document.getElementById('minimaxApiKey').value = minimaxApiKey;
-    }
-}
-
-// 保存API密钥
-function saveApiKeys() {
-    const deepseekApiKey = document.getElementById('deepseekApiKey').value.trim();
-    const minimaxApiKey = document.getElementById('minimaxApiKey').value.trim();
-    const statusDiv = document.getElementById('apiKeyStatus');
-    
-    // 保存到localStorage
-    localStorage.setItem('deepseekApiKey', deepseekApiKey);
-    localStorage.setItem('minimaxApiKey', minimaxApiKey);
-    
-    // 显示成功消息
-    statusDiv.innerHTML = '<div class="alert alert-success" role="alert">API密钥保存成功！正在更新音色列表...</div>';
-    
-    // 刷新音色列表
-    refreshVoiceList(minimaxApiKey);
-    
-    // 3秒后清除消息
-    setTimeout(() => {
-        statusDiv.innerHTML = '';
-    }, 3000);
-}
-
-// 刷新音色列表
-async function refreshVoiceList(minimaxApiKey) {
-    try {
-        // 调用API获取最新音色列表
-        const response = await fetch('/api/get-voice-list', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-MiniMax-API-Key': minimaxApiKey
-            },
-            body: JSON.stringify({
-                minimax_api_key: minimaxApiKey
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // 更新音色列表
-            updateVoiceDropdowns(data.voices);
-        }
-    } catch (error) {
-        console.error('刷新音色列表失败:', error);
-    }
-}
-
-// 更新音色下拉菜单
-function updateVoiceDropdowns(voices) {
-    // 更新角色A的音色下拉菜单
-    updateSingleVoiceDropdown('voiceA', 'voiceADropdown', voices);
-    // 更新角色B的音色下拉菜单
-    updateSingleVoiceDropdown('voiceB', 'voiceBDropdown', voices);
-}
-
-// 更新单个音色下拉菜单
-function updateSingleVoiceDropdown(selectId, dropdownId, voices) {
-    // 更新隐藏的原生select
-    const selectElement = document.getElementById(selectId);
-    // 清空现有选项
-    selectElement.innerHTML = '';
-    // 添加新选项
-    voices.forEach(voice => {
-        const option = document.createElement('option');
-        option.value = voice.id;
-        option.textContent = voice.name;
-        selectElement.appendChild(option);
-    });
-    
-    // 更新Bootstrap Dropdown
-    const dropdownMenu = document.querySelector(`#${dropdownId} + .dropdown-menu`);
-    // 清空现有菜单项
-    dropdownMenu.innerHTML = '';
-    // 添加新菜单项
-    voices.forEach(voice => {
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.className = 'dropdown-item';
-        a.href = '#';
-        a.setAttribute('data-value', voice.id);
-        a.textContent = voice.name;
-        // 添加点击事件
-        a.addEventListener('click', function(e) {
-            e.preventDefault();
-            const value = this.getAttribute('data-value');
-            const text = this.textContent;
-            // 更新隐藏的select元素
-            selectElement.value = value;
-            // 更新Dropdown按钮文本
-            document.getElementById(dropdownId).textContent = text;
-        });
-        li.appendChild(a);
-        dropdownMenu.appendChild(li);
-    });
-    
-    // 更新Dropdown按钮显示当前选中的值
-    const selectedValue = selectElement.value;
-    const selectedOption = selectElement.querySelector(`option[value="${selectedValue}"]`);
-    if (selectedOption) {
-        document.getElementById(dropdownId).textContent = selectedOption.textContent;
-    }
-}
-
-// 清除API密钥
-function clearApiKeys() {
-    // 清除输入框
-    document.getElementById('deepseekApiKey').value = '';
-    document.getElementById('minimaxApiKey').value = '';
-    
-    // 清除localStorage
-    localStorage.removeItem('deepseekApiKey');
-    localStorage.removeItem('minimaxApiKey');
-    
-    // 显示成功消息
-    const statusDiv = document.getElementById('apiKeyStatus');
-    statusDiv.innerHTML = '<div class="alert alert-info" role="alert">API密钥已清除！</div>';
-    
-    // 3秒后清除消息
-    setTimeout(() => {
-        statusDiv.innerHTML = '';
-    }, 3000);
 }
 
 // 文本文稿转结构化数据
