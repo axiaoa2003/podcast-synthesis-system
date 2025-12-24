@@ -1,10 +1,27 @@
-/* 自定义样式 */
+/* ==================== 极简黑白风格 ==================== */
+
+/* CSS 变量 */
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #f1f3f5;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6c757d;
+    --text-tertiary: #adb5bd;
+    --border-color: #e9ecef;
+    --border-dark: #ced4da;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --border-radius: 8px;
+    --transition: all 0.2s ease;
+}
 
 /* 整体布局 */
 body {
-    font-family: 'Microsoft YaHei', Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
+    font-family: 'Inter', 'Microsoft YaHei', Arial, sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.6;
 }
 
 .container {
@@ -13,45 +30,52 @@ body {
 
 /* 标题样式 */
 h1 {
-    color: #495057;
-    font-weight: 600;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: -0.3px;
 }
 
 /* 标签页样式 */
 .nav-tabs {
-    margin-bottom: 20px;
-    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 0;
+    border: none;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nav-tabs .nav-link {
     border: none;
-    border-bottom: 3px solid transparent;
-    color: #6c757d;
+    color: var(--text-secondary);
     font-weight: 500;
     padding: 12px 20px;
-    margin-right: 5px;
-    transition: all 0.3s ease;
+    margin-right: 4px;
+    border-radius: 8px 8px 0 0;
+    transition: var(--transition);
+    background: transparent;
 }
 
 .nav-tabs .nav-link:hover {
-    color: #0d6efd;
-    border-bottom-color: #b3d7ff;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
 }
 
 .nav-tabs .nav-link.active {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
-    background-color: transparent;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border-bottom: 2px solid var(--text-primary);
 }
 
 /* 标签页内容 */
 .tab-content {
-    background-color: #ffffff;
-    border: 1px solid #dee2e6;
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    padding: 25px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: var(--bg-primary);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
 }
 
 /* 按钮样式 */
@@ -59,160 +83,198 @@ h1 {
     border-radius: 6px;
     padding: 10px 20px;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.btn:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .btn-primary {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background: var(--text-primary);
+    color: white;
+    border-color: var(--text-primary);
 }
 
 .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.25);
+    background: #000;
+    border-color: #000;
+}
+
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-dark);
+}
+
+.btn-secondary:hover {
+    background: var(--border-color);
+}
+
+.btn-success {
+    background: var(--text-primary);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #000;
+}
+
+.btn-info {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.btn-info:hover {
+    background: var(--border-color);
+}
+
+.btn-outline-secondary {
+    border: 1px solid var(--border-dark);
+    color: var(--text-secondary);
+    background: white;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-primary);
+    color: var(--text-primary);
 }
 
 .btn-lg {
-    padding: 12px 30px;
+    padding: 14px 32px;
     font-size: 1.1rem;
+    font-weight: 600;
 }
 
 /* 表单样式 */
 .form-label {
     font-weight: 500;
-    color: #495057;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .form-control {
     border-radius: 6px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--border-dark);
     padding: 10px 12px;
-    transition: all 0.3s ease;
+    transition: var(--transition);
+    background: white;
+    font-size: 0.95rem;
 }
 
 .form-control:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
     outline: none;
 }
 
-/* Select 下拉列表样式 */
-select.form-select {
-    position: relative;
-    max-height: 40px; /* 确保 select 本身高度正常 */
-}
-
-/* 针对 WebKit 浏览器的原生下拉列表样式 */
-select.form-select {
-    /* 设置下拉列表的最大高度 */
-    max-height: 300px;
-    /* 启用滚动 */
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* 改善外观 */
+/* 下拉菜单样式 */
+.dropdown-menu {
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    border: 1px solid #ced4da;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* 针对 Firefox 的下拉列表样式 */
-@-moz-document url-prefix() {
-    select.form-select {
-        /* Firefox 支持通过 appearance 属性修改 select 样式 */
-        -moz-appearance: none;
-        /* 设置最大高度 */
-        max-height: 300px;
-        /* 添加滚动条 */
-        overflow-y: auto;
-        /* 滚动条样式 */
-        scrollbar-width: thin;
-        scrollbar-color: #0d6efd #f8f9fa;
-    }
-}
-
-/* 针对 Internet Explorer 和 Edge 的样式 */
-@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
-    select.form-select {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-}
-
-/* 通用滚动条样式（适用于所有浏览器的滚动容器） */
-.select-scrollable {
+    box-shadow: var(--shadow-md);
+    padding: 0.25rem;
     max-height: 300px;
     overflow-y: auto;
-    overflow-x: hidden;
 }
 
-/* 美化滚动条 */
+.dropdown-item {
+    border-radius: 4px;
+    padding: 8px 12px;
+    transition: var(--transition);
+    color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* 滚动条 */
+.dropdown-menu::-webkit-scrollbar,
 .select-scrollable::-webkit-scrollbar,
-select.form-select::-webkit-scrollbar {
-    width: 8px;
+textarea::-webkit-scrollbar {
+    width: 6px;
 }
 
+.dropdown-menu::-webkit-scrollbar-track,
 .select-scrollable::-webkit-scrollbar-track,
-select.form-select::-webkit-scrollbar-track {
-    background: #f8f9fa;
-    border-radius: 4px;
+textarea::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
 }
 
+.dropdown-menu::-webkit-scrollbar-thumb,
 .select-scrollable::-webkit-scrollbar-thumb,
-select.form-select::-webkit-scrollbar-thumb {
-    background-color: #0d6efd;
-    border-radius: 4px;
-    border: 2px solid #f8f9fa;
+textarea::-webkit-scrollbar-thumb {
+    background: var(--border-dark);
+    border-radius: 3px;
 }
 
 textarea.form-control {
     resize: vertical;
     min-height: 120px;
+    line-height: 1.6;
 }
 
 /* 卡片样式 */
 .card {
     border-radius: 8px;
-    border: 1px solid #dee2e6;
-    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    background: white;
 }
 
 .card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-    font-weight: 500;
-    color: #495057;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
 }
 
 /* 结果展示样式 */
 #inspirationResult,
 #scriptResult {
-    min-height: 150px;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
+    min-height: 120px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     white-space: pre-wrap;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Consolas', monospace;
     font-size: 0.9rem;
+    line-height: 1.6;
+    padding: 1rem;
+}
+
+#inspirationResult:hover,
+#scriptResult:hover {
+    border-color: var(--border-dark);
 }
 
 /* 进度条样式 */
 .progress {
-    height: 20px;
-    border-radius: 10px;
+    height: 8px;
+    border-radius: 4px;
     overflow: hidden;
+    background: var(--bg-tertiary);
 }
 
 .progress-bar {
-    border-radius: 10px;
+    border-radius: 4px;
     transition: width 0.3s ease;
+    background: var(--text-primary);
 }
 
 /* 状态信息样式 */
@@ -220,126 +282,118 @@ textarea.form-control {
 #validationResult,
 #resultMessage {
     min-height: 40px;
-    padding: 10px;
+    padding: 0.75rem 1rem;
     border-radius: 6px;
     font-weight: 500;
 }
 
-/* 成功和错误信息样式 */
+/* Alert 样式 */
 .alert {
     border-radius: 6px;
-    border: none;
-    padding: 12px 16px;
-    margin-bottom: 15px;
+    border: 1px solid transparent;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
 }
 
 .alert-success {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background: #f0f9f0;
+    color: #166534;
+    border-color: #86efac;
 }
 
 .alert-danger {
-    background-color: #f8d7da;
-    color: #842029;
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fca5a5;
 }
 
 .alert-warning {
-    background-color: #fff3cd;
-    color: #664d03;
+    background: #fefce8;
+    color: #854d0e;
+    border-color: #fde047;
 }
 
 .alert-info {
-    background-color: #cff4fc;
-    color: #055160;
+    background: #f0f9ff;
+    color: #1e40af;
+    border-color: #93c5fd;
 }
 
 /* 音频预览样式 */
 #audioPreview audio {
     width: 100%;
     max-width: 600px;
-    margin: 10px 0;
+    margin: 1rem 0;
     border-radius: 6px;
 }
 
-/* 响应式设计调整 */
+/* 下载按钮样式 */
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 6px;
+    background: var(--text-primary);
+    color: white;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.download-btn:hover {
+    background: #000;
+    color: white;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+
     .container {
-        padding: 0 15px;
+        padding: 0 1rem;
     }
-    
-    .nav-tabs {
-        flex-wrap: wrap;
-    }
-    
+
     .nav-tabs .nav-link {
         padding: 8px 12px;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
-    
+
     .tab-content {
-        padding: 15px;
+        padding: 1rem;
     }
-    
-    .row {
-        flex-direction: column;
-    }
-    
+
     .col-md-6 {
-        margin-bottom: 20px;
+        margin-bottom: 1rem;
     }
-    
+
     #generationProgress {
         width: 100%;
-        margin-top: 15px;
+        margin-top: 1rem;
     }
 }
 
 /* 加载动画 */
 .loading {
     display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(13, 110, 253, 0.3);
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
     border-radius: 50%;
-    border-top-color: #0d6efd;
-    animation: spin 1s ease-in-out infinite;
+    border-top-color: var(--text-primary);
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-/* 复制按钮样式 */
-.btn-success {
-    background-color: #198754;
-    border-color: #198754;
-}
-
-.btn-success:hover {
-    background-color: #157347;
-    border-color: #146c43;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.25);
-}
-
-/* 二级按钮样式 */
-.btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.btn-secondary:hover {
-    background-color: #5c636a;
-    border-color: #565e64;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.25);
-}
-
-/* 下载按钮样式 */
-.download-btn {
-    display: inline-block;
-    margin-top: 15px;
-    padding: 12px 25px;
-    font-size: 1.1rem;
-    font-weight: 600;
+/* 文本选中效果 */
+::selection {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
 }
